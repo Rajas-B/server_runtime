@@ -23,6 +23,8 @@ private:
     Status parse_headers(std::string_view headers_view);
     Status parse_request_line(std::string_view line);
     Status process_headers();
+    Status validate_headers();
+    
     Status read_body(const uint8_t*& buf, size_t& length);
     void reset_state();
 

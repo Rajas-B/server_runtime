@@ -65,6 +65,7 @@ Status HTTPParser::read_headers(const uint8_t*& buf, size_t& length) {
         
         std::string_view headers_only = buffer_view.substr(0, end_of_headers_pos);
         if (parse_headers(headers_only) == Status::ERROR) return Status::ERROR;
+        if (validate_headers() == Status::ERROR) return Status::ERROR;
         if (process_headers() == Status::ERROR) return Status::ERROR;
 
         // body bytes present
@@ -128,6 +129,28 @@ Status HTTPParser::parse_request_line(std::string_view line) {
     if (request->method.empty() || request->url.empty() || !request->version.starts_with("HTTP/")) {
         return Status::ERROR;
     }
+    return Status::OK;
+}
+
+Status HTTPParser::validate_headers() {
+    const auto& headers_map = request->headers->parsed_headers;
+
+    // HTTP/1.1 strictly requires host
+    if (request->version == "HTTP/1.1") {
+        if (headers_map.find("Host") == headers_map.end()) {
+            return Status::ERROR; // Should trigger a 400 Bad Request
+        }
+    }
+
+    // HTTP Request Smuggling
+    // request cannot have both Content-Length and Transfer-Encoding
+    bool has_content_length = headers_map.find("Content-Length") != headers_map.end();
+    bool has_transfer_encoding = headers_map.find("Transfer-Encoding") != headers_map.end();
+
+    if (has_content_length && has_transfer_encoding) {
+        return Status::ERROR; // http code 400
+    }
+
     return Status::OK;
 }
 
