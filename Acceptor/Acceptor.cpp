@@ -7,6 +7,8 @@
 #include "Reactor/Reactor.hpp"
 #include "HTTP/v1.1/HTTPParser.hpp"
 #include "Handler/ClientHandler.hpp"
+#include "Protocol/IParserFactory.hpp"
+
 
 Acceptor::Acceptor(int server_fd, reactor::Reactor* reactor, int wakeup_fd): 
     server_fd(server_fd), reactor(reactor), wakeup_fd(wakeup_fd) {}

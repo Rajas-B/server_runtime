@@ -4,6 +4,10 @@
 
 #include "Reactor.hpp"
 
+#include "EventHandler/EventHandler.hpp"
+#include "WakeupHandler/WakeupHandler.hpp"
+#include "Handler/ClientHandler.hpp"
+
 int reactor::Reactor::start() {
     // the infinite loop
     struct epoll_event events[64]; // the events (which will be new connection or a read event)
@@ -28,8 +32,6 @@ int reactor::Reactor::start() {
     return 0;
 }
 
-
-
 void reactor::Reactor::add_handler(EventHandler* handler) {
     struct epoll_event ev;
     ev.events = EPOLLIN | EPOLLET;
@@ -43,7 +45,7 @@ void reactor::Reactor::set_wakeup_handler(WakeupHandler* ref_wakeup_handler) {
 }
 
 // called by 
-void reactor::Reactor::add_to_write_ready(EventHandler* handler) {
+void reactor::Reactor::add_to_write_ready(ClientHandler* handler) {
     {
         std::lock_guard<std::mutex> lock(write_guard);
         ready_to_write_clients.push(handler);
@@ -67,4 +69,8 @@ void reactor::Reactor::process_write_clients() {
         handler->mark_as_processed();
         handler->handle_write();
     }
+}
+
+int reactor::Reactor::get_epoll_fd() {
+    return epoll_fd;
 }

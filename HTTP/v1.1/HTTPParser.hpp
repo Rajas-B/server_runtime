@@ -1,10 +1,13 @@
 #pragma once
-#include "Protocol/IProtocolParser.hpp"
-#include "Status.hpp"
-#include "Request.hpp"
+
 #include <string>
 #include <string_view>
 #include <memory>
+
+#include "Protocol/IProtocolParser.hpp"
+
+class Request;
+enum Status;
 
 enum ReadingState {
     ReadingHeaders,

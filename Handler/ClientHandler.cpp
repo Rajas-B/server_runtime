@@ -1,8 +1,12 @@
+#pragma once
 #include "ClientHandler.hpp"
 
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <cerrno>
+
+#include "HTTP/v1.1/HTTPParser.hpp"
+#include "Reactor/Reactor.hpp"
 
 ClientHandler::ClientHandler(int fd, HTTPParser* parser, int wakeup_fd, reactor::Reactor*& reactor): 
 fd(fd), parser(parser), wakeup_fd(wakeup_fd), reactor(reactor) {}
@@ -32,7 +36,7 @@ void ClientHandler::handle_read() {
 void ClientHandler::enqueue_response_and_wake(std::vector<uint8_t> response_bytes) {
     // thread safe to push response bytes onto queue, to keep responses continuguous
     {
-        std::lock_guard<std::mutex> lock(write_mutex);
+        std::lock_guard<std::mutex> lock(write_guard);
         write_queue.push_back(std::move(response_bytes));
     }
     // create a wakeup signal
@@ -48,8 +52,8 @@ void ClientHandler::handle_write() {
     std::lock_guard<std::mutex> lock(write_guard);
 
     while(!write_queue.empty()) {
-        // take the message at the top
-        auto& message = write_queue.top();
+        // take the message at the front of the queue
+        auto& message = write_queue.front();
         ssize_t bytes_written = write(fd, message.data(), message.size());
 
         if (bytes_written == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
@@ -66,6 +70,18 @@ void ClientHandler::handle_write() {
         else {
             write_queue.pop_front();
         }
+    }
+    struct epoll_event ev;
+    ev.data.ptr = this;
+    // queue is not empty, so create an EPOLLOUT event
+    if (!write_queue.empty()) {
+        ev.events = EPOLLIN | EPOLLET | EPOLLOUT;
+        epoll_ctl(reactor->get_epoll_fd(), EPOLL_CTL_ADD, fd, &ev);
+    }
+    else {
+        // writing is complete, EPOLLOUT will waste processing time
+        // remove it
+        ev.events = EPOLLIN | EPOLLET;
     }
 }
 

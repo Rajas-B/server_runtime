@@ -3,6 +3,9 @@
 #include <algorithm>
 #include <iostream>
 
+#include "Status.hpp"
+#include "Data/Request.hpp"
+
 HTTPParser::HTTPParser() {
     reset_state();
 }
@@ -125,8 +128,9 @@ Status HTTPParser::parse_request_line(std::string_view line) {
     request->method = std::string(line.substr(0, first_space));
     request->url = std::string(line.substr(first_space + 1, second_space - (first_space + 1)));
     request->version = std::string(line.substr(second_space + 1));
+    std::string_view version_view(request->version);
 
-    if (request->method.empty() || request->url.empty() || !request->version.starts_with("HTTP/")) {
+    if (request->method.empty() || request->url.empty() || !version_view.starts_with("HTTP/")) {
         return Status::ERROR;
     }
     return Status::OK;

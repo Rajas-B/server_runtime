@@ -1,7 +1,16 @@
 #pragma once
+#include <atomic>
+#include <mutex>
+#include <deque>
+#include <vector>
+#include <cstdint>
+
 #include "EventHandler/EventHandler.hpp"
-#include "HTTP/v1.1/HTTPParser.hpp"
-#include "Reactor/Reactor.hpp"
+
+class HTTPParser;
+namespace reactor {
+    class Reactor;
+}
 
 class ClientHandler: public EventHandler {
 public:
@@ -18,7 +27,7 @@ private:
     int wakeup_fd;
     uint8_t buf[8*1024];
     HTTPParser* parser;
-    std::mutex write_mutex;
+    std::mutex write_guard;
     std::deque<std::vector<uint8_t>> write_queue;
     std::atomic<bool> is_being_processed{false}; // set to true when this handler is added in reactor's queue, to avoid duplicate entries
 

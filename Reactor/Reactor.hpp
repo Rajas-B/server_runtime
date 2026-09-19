@@ -7,9 +7,9 @@
 #include <queue>
 #include <mutex>
 
-#include "EventHandler/EventHandler.hpp"
-#include "WakeupHandler/WakeupHandler.hpp"
-#include "Handler/ClientHandler.hpp"
+class EventHandler;
+class ClientHandler;
+class WakeupHandler;
 
 namespace reactor {
 
@@ -19,9 +19,10 @@ public:
         epoll_fd = epoll_create1(0);
     }
     void add_handler(EventHandler* handler);
-    void add_to_write_ready(EventHandler* handler);
+    void add_to_write_ready(ClientHandler* handler);
     void set_wakeup_handler(WakeupHandler* wakeup_handler);
     void process_write_clients();
+    int get_epoll_fd();
     int start();
 private:
     // this is the epoll fd

@@ -1,6 +1,8 @@
-#include "EventHandler/EventHandler.hpp"
-#include "Protocol/IParserFactory.hpp"
+#pragma once
 
+#include "EventHandler/EventHandler.hpp"
+
+class IParserFactory;
 namespace reactor {
     class Reactor;
 }
