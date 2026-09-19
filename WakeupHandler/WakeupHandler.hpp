@@ -1,0 +1,14 @@
+#include "EventHandler/EventHandler.hpp"
+#include "Reactor/Reactor.hpp"
+
+class WakeupHandler: public EventHandler {
+public:
+    void handle_read() override;
+    void handle_write() override;
+    void handle_close() override;
+    int getfd() override;
+    WakeupHandler(int wakeup_fd, reactor::Reactor* reactor): wakeup_fd(wakeup_fd), reactor(reactor) {}
+private:
+    int wakeup_fd;
+    reactor::Reactor* reactor;
+};
