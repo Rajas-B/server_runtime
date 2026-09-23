@@ -7,17 +7,20 @@
 
 #include "HTTP/v1.1/HTTPParser.hpp"
 #include "Reactor/Reactor.hpp"
+#include "EventContext/EventContext.hpp"
 
-ClientHandler::ClientHandler(int fd, HTTPParser* parser, int wakeup_fd, reactor::Reactor*& reactor): 
-fd(fd), parser(parser), wakeup_fd(wakeup_fd), reactor(reactor) {}
+ClientHandler::ClientHandler(int clientfd, std::unique_ptr<EventContext> ctx): 
+clientfd(clientfd), ctx(std::move(ctx)) {
+    ctx->bind_handler(this);
+}
 
 int ClientHandler::getfd() {
-    return fd;
+    return clientfd;
 }
 
 void ClientHandler::handle_read() {
     while (true) {
-        ssize_t bytes_read = read(fd, buf, 8192);
+        ssize_t bytes_read = read(clientfd, buf, 8192);
         if (bytes_read == -1 && errno == EAGAIN){    
             break;
         }
@@ -42,7 +45,7 @@ void ClientHandler::enqueue_response_and_wake(std::vector<uint8_t> response_byte
     // create a wakeup signal
     // this will unlock epoll wait because there is an event on the wakeup handler
     if (is_being_processed.exchange(true) == false) {
-        reactor->add_to_write_ready(this);
+        ctx->add_to_write_queue();
     }
 }
 
@@ -54,7 +57,7 @@ void ClientHandler::handle_write() {
     while(!write_queue.empty()) {
         // take the message at the front of the queue
         auto& message = write_queue.front();
-        ssize_t bytes_written = write(fd, message.data(), message.size());
+        ssize_t bytes_written = write(clientfd, message.data(), message.size());
 
         if (bytes_written == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
             // the OS buffer is full, can't write now
@@ -71,17 +74,14 @@ void ClientHandler::handle_write() {
             write_queue.pop_front();
         }
     }
-    struct epoll_event ev;
-    ev.data.ptr = this;
-    // queue is not empty, so create an EPOLLOUT event
     if (!write_queue.empty()) {
-        ev.events = EPOLLIN | EPOLLET | EPOLLOUT;
-        epoll_ctl(reactor->get_epoll_fd(), EPOLL_CTL_ADD, fd, &ev);
+        // queue is not empty, so create an EPOLLOUT event
+        ctx->remove_write_wakeup();
     }
     else {
         // writing is complete, EPOLLOUT will waste processing time
         // remove it
-        ev.events = EPOLLIN | EPOLLET;
+        ctx->remove_write_wakeup();
     }
 }
 

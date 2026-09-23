@@ -11,8 +11,6 @@ class EventHandler;
 class ClientHandler;
 class WakeupHandler;
 
-namespace reactor {
-
 class Reactor {
 public:
     Reactor(const int& port, int wakeup_fd): port(port) {
@@ -24,6 +22,7 @@ public:
     void process_write_clients();
     int get_epoll_fd();
     int start();
+    void modify_epoll(int events, EventHandler* handler);
 private:
     // this is the epoll fd
     int epoll_fd;
@@ -33,4 +32,3 @@ private:
     std::mutex write_guard;
 };
 
-}

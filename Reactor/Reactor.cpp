@@ -8,7 +8,7 @@
 #include "WakeupHandler/WakeupHandler.hpp"
 #include "Handler/ClientHandler.hpp"
 
-int reactor::Reactor::start() {
+int Reactor::start() {
     // the infinite loop
     struct epoll_event events[64]; // the events (which will be new connection or a read event)
 
@@ -32,20 +32,20 @@ int reactor::Reactor::start() {
     return 0;
 }
 
-void reactor::Reactor::add_handler(EventHandler* handler) {
+void Reactor::add_handler(EventHandler* handler) {
     struct epoll_event ev;
     ev.events = EPOLLIN | EPOLLET;
     ev.data.ptr = handler;
     epoll_ctl(epoll_fd, EPOLL_CTL_ADD, handler->getfd(), &ev);
 }
 
-void reactor::Reactor::set_wakeup_handler(WakeupHandler* ref_wakeup_handler) {
+void Reactor::set_wakeup_handler(WakeupHandler* ref_wakeup_handler) {
     wakeup_handler = ref_wakeup_handler;
     add_handler(wakeup_handler);
 }
 
 // called by 
-void reactor::Reactor::add_to_write_ready(ClientHandler* handler) {
+void Reactor::add_to_write_ready(ClientHandler* handler) {
     {
         std::lock_guard<std::mutex> lock(write_guard);
         ready_to_write_clients.push(handler);
@@ -56,7 +56,7 @@ void reactor::Reactor::add_to_write_ready(ClientHandler* handler) {
 }
 
 // called by wakeup handler
-void reactor::Reactor::process_write_clients() {
+void Reactor::process_write_clients() {
     std::queue<ClientHandler*> local_queue;
     {
         std::lock_guard<std::mutex> lock(write_guard);
@@ -71,6 +71,13 @@ void reactor::Reactor::process_write_clients() {
     }
 }
 
-int reactor::Reactor::get_epoll_fd() {
+int Reactor::get_epoll_fd() {
     return epoll_fd;
+}
+
+void Reactor::modify_epoll(int events, EventHandler* handler) {
+    struct epoll_event ev;
+    ev.data.ptr = handler;
+    ev.events = events;
+    epoll_ctl(epoll_fd, EPOLL_CTL_MOD, handler->getfd(), &ev);
 }

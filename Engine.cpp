@@ -53,12 +53,11 @@ int main() {
 
     // create epoll instance in OS
     // which is managed by the reactorrrr
-    auto reactor = new reactor::Reactor(8080, wakeup_fd);
+    auto reactor = new Reactor(8080, wakeup_fd);
 
     // one acceptor fd to accept new client connections
-    Acceptor acceptor(server_fd, reactor, wakeup_fd);
-    EventHandler* handler = &acceptor;
-    reactor->add_handler(&acceptor);
+    EventHandler* acceptor = new Acceptor(server_fd, reactor, wakeup_fd);
+    reactor->add_handler(acceptor);
 
     WakeupHandler wakeupHandler(wakeup_fd, reactor);
     reactor->set_wakeup_handler(&wakeupHandler);

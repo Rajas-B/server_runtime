@@ -11,8 +11,8 @@ public:
     void handle_write() override;
     void handle_close() override {} ;
     int getfd() override;
-    WakeupHandler(int wakeup_fd, reactor::Reactor* reactor): wakeup_fd(wakeup_fd), reactor(reactor) {}
+    WakeupHandler(int wakeup_fd, Reactor* reactor): wakeup_fd(wakeup_fd), reactor(reactor) {}
 private:
     int wakeup_fd;
-    reactor::Reactor* reactor;
+    Reactor* reactor;
 };
