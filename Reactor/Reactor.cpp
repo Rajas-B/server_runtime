@@ -1,6 +1,8 @@
 #pragma once
 #include <sys/epoll.h>
 #include <unistd.h>
+#include <sys/eventfd.h>
+#include <memory>
 
 #include "Reactor.hpp"
 #include "WakeupHandler/WakeupHandler.hpp"
@@ -30,6 +32,17 @@ int Reactor::start() {
     return 0;
 }
 
+Reactor::Reactor(){
+    epoll_fd = epoll_create1(0);
+    int wakeup_fd = eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
+    if (wakeup_fd == -1) {
+        throw std::runtime_error("Failed to create eventfd");
+    }
+    wakeup_handler = std::make_unique<WakeupHandler>(wakeup_fd, this);
+    add_handler(wakeup_handler.get());
+}
+
+
 void Reactor::add_handler(EventHandler* handler) {
     struct epoll_event ev;
     ev.events = EPOLLIN | EPOLLET;
@@ -37,12 +50,6 @@ void Reactor::add_handler(EventHandler* handler) {
     epoll_ctl(epoll_fd, EPOLL_CTL_ADD, handler->getfd(), &ev);
 }
 
-void Reactor::set_wakeup_handler(WakeupHandler* ref_wakeup_handler) {
-    wakeup_handler = ref_wakeup_handler;
-    add_handler(wakeup_handler);
-}
-
-// called by 
 void Reactor::add_to_write_ready(EventHandler* handler) {
     {
         std::lock_guard<std::mutex> lock(write_guard);

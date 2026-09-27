@@ -14,8 +14,20 @@ public:
     int getfd () override {
         return server_fd;
     }
-    Acceptor(int server_fd, Reactor* reactor, int wakeup_fd): 
-    server_fd(server_fd), reactor(reactor), wakeup_fd(wakeup_fd) {}
+    void setup_listening_fd() {
+        sockaddr_in addr = {};
+        addr.sin_family = AF_INET;
+        addr.sin_port = htons(port);
+        bind(server_fd, (sockaddr*)&addr, sizeof(addr));
+        listen(server_fd, SOMAXCONN);
+    }
+    
+
+    void bind_to_port() {
+        server_fd = socket(AF_INET, SOCK_STREAM | (blocking ? 0 : SOCK_NONBLOCK), 0);
+        int val = 1;
+        setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(val));
+    }
 
     void handle_read() override {
         int clientfd = accept(server_fd, nullptr, nullptr);
@@ -25,8 +37,15 @@ public:
         EventHandler* handler = new THandler(clientfd, std::move(context));
         reactor->add_handler(handler);
     }
+    Acceptor(int port, Reactor* reactor): 
+        port(port), reactor(reactor) {
+        setup_listening_fd();
+        bind_to_port();
+    }
+
+
 private:
     int server_fd;
-    int wakeup_fd;
+    int port;
     Reactor* reactor;
 };

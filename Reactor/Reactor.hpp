@@ -15,12 +15,9 @@ class WakeupHandler;
 
 class Reactor {
 public:
-    Reactor(const int& port, int wakeup_fd): port(port) {
-        epoll_fd = epoll_create1(0);
-    }
+    Reactor();
     void add_handler(EventHandler* handler);
     void add_to_write_ready(EventHandler* handler);
-    void set_wakeup_handler(WakeupHandler* wakeup_handler);
     void process_write_clients();
     int get_epoll_fd();
     int start();
@@ -28,8 +25,7 @@ public:
 private:
     // this is the epoll fd
     int epoll_fd;
-    WakeupHandler* wakeup_handler;
-    uint port;
+    std::unique_ptr<WakeupHandler> wakeup_handler;
     std::queue<EventHandler*> ready_to_write_clients;
     std::mutex write_guard;
 };
