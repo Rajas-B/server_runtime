@@ -1,1 +1,4 @@
 .vscode/*
+.git/*
+
+build/*

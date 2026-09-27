@@ -7,11 +7,9 @@
 #include <stdexcept>
 #include <memory>
 
-#include "Reactor/Reactor.hpp"
-#include "WakeupHandler/WakeupHandler.hpp"
-#include "Acceptor/Acceptor.hpp"
-
-class EventHandler; 
+class Reactor;
+class EventHandler;
+class WakeupHandler;
 
 class Engine { 
 public:

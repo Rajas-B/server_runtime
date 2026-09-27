@@ -1,12 +1,13 @@
 #pragma once
 
-#include "EventHandler/EventHandler.hpp"
-#include "Reactor/Reactor.hpp"
-#include "EventContext/EventContext.hpp"
-#include "EventContext/ReactorEventContext.hpp"
+#include "EventHandler.hpp"
 
 #include <memory>
 #include <sys/socket.h>
+
+class EventContext;
+class ReactorEventContext;
+class Reactor;
 
 template <typename THandler>
 class Acceptor: public EventHandler {
@@ -24,7 +25,7 @@ public:
     
 
     void bind_to_port() {
-        server_fd = socket(AF_INET, SOCK_STREAM | (blocking ? 0 : SOCK_NONBLOCK), 0);
+        server_fd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
         int val = 1;
         setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(val));
     }

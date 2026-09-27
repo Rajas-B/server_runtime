@@ -1,3 +1,4 @@
+#pragma once
 #include "EventContext.hpp"
 
 class EventHandler;

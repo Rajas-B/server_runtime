@@ -1,7 +1,9 @@
-#include "Engine/Engine.hpp"
+#include "Engine.hpp"
+#include "Reactor.hpp"
+#include "WakeupHandler.hpp"
 
 Engine::Engine() {
-    reactor = std::make_unique<Reactor>(wakeup_fd);
+    reactor = std::make_unique<Reactor>();
 }
 
 Engine::~Engine() {

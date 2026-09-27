@@ -1,0 +1,3 @@
+add_executable(my_test_server server_example.cpp)
+
+target_link_libraries(my_test_server PRIVATE reactor_lib)

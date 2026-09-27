@@ -8,9 +8,9 @@
 #include <iostream>
 #include <queue>
 #include <mutex>
+#include <memory>
 
 class EventHandler;
-class ClientHandler;
 class WakeupHandler;
 
 class Reactor {

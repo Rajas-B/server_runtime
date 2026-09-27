@@ -1,8 +1,7 @@
-#pragma once
 #include "ReactorEventContext.hpp"
 
-#include "Reactor/Reactor.hpp"
-#include "EventHandler/EventHandler.hpp"
+#include "Reactor.hpp"
+#include "EventHandler.hpp"
 
 void ReactorEventContext::bind_handler(EventHandler* client_handler) {
     handler = client_handler;

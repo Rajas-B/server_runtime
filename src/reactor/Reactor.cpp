@@ -1,11 +1,10 @@
-#pragma once
 #include <sys/epoll.h>
 #include <unistd.h>
 #include <sys/eventfd.h>
 #include <memory>
 
 #include "Reactor.hpp"
-#include "WakeupHandler/WakeupHandler.hpp"
+#include "WakeupHandler.hpp"
 
 
 int Reactor::start() {
