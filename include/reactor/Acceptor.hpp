@@ -31,7 +31,7 @@ public:
     }
 
     void handle_read() override {
-        int clientfd = accept(server_fd, nullptr, nullptr);
+        int clientfd = accept4(server_fd, nullptr, nullptr, SOCK_NONBLOCK);
         
         // added client handler
         std::unique_ptr<EventContext> context = std::make_unique<ReactorEventContext>(*reactor);
