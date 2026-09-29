@@ -9,7 +9,7 @@ class EventContext;
 class ReactorEventContext;
 class Reactor;
 
-template <typename THandler>
+template <typename TFactory>
 class Acceptor: public EventHandler {
 public:
     int getfd () override {
@@ -35,7 +35,7 @@ public:
         
         // added client handler
         std::unique_ptr<EventContext> context = std::make_unique<ReactorEventContext>(*reactor);
-        EventHandler* handler = new THandler(clientfd, std::move(context));
+        EventHandler* handler = handler_factory(clientfd, std::move(context));
         reactor->add_handler(handler);
     }
     Acceptor(int port, Reactor* reactor): 
@@ -49,4 +49,5 @@ private:
     int server_fd;
     int port;
     Reactor* reactor;
+    TFactory handler_factory;
 };
