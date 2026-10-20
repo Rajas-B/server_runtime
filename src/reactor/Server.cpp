@@ -2,22 +2,22 @@
 #include "Reactor.hpp"
 #include "WakeupHandler.hpp"
 
-Engine::Engine() {
+Server::Server() {
     reactor = std::make_unique<Reactor>();
 }
 
-Engine::~Engine() {
+Server::~Server() {
     close(wakeup_fd);
 }
 
-void Engine::register_acceptor(EventHandler* acceptor) {
+void Server::register_acceptor(EventHandler* acceptor) {
     reactor->add_handler(acceptor);
 }
 
-void Engine::start() {
+void Server::start() {
     reactor->start();
 }
 
-Reactor* Engine::get_reactor() const {
+Reactor* Server::get_reactor() const {
     return reactor.get();
 }

@@ -10,10 +10,10 @@ class Reactor;
 class EventHandler;
 class WakeupHandler;
 
-class Engine { 
+class Server { 
 public:
-    Engine();
-    ~Engine();
+    Server();
+    ~Server();
     void register_acceptor(EventHandler* acceptor);
     void start();
     

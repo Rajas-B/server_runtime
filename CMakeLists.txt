@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_library(reactor_lib
-    src/reactor/Engine.cpp
+    src/reactor/Server.cpp
     src/reactor/Reactor.cpp
     src/reactor/ReactorEventContext.cpp
     src/reactor/TcpConnection.cpp
