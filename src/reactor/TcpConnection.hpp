@@ -12,6 +12,7 @@ public:
     void close_connection() override;
     
     uint64_t get_conn_id() const override;
+    int getfd() override;
 
     TcpConnection(int fd_, uint64_t conn_id_);
     void graceful_shutdown() override;

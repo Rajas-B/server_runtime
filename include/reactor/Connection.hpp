@@ -10,4 +10,5 @@ public:
     virtual void close_connection() = 0; 
     virtual uint64_t get_conn_id() const = 0;
     virtual void graceful_shutdown() = 0;
+    virtual int getfd() = 0;
 };

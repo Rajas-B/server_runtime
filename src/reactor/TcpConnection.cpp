@@ -24,3 +24,7 @@ TcpConnection::TcpConnection(int fd_, uint64_t conn_id_):
 void TcpConnection::graceful_shutdown() {
     shutdown(fd, SHUT_WR);
 }
+
+int TcpConnection::getfd() {
+    return fd;
+}
