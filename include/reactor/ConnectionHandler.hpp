@@ -11,4 +11,6 @@ public:
     virtual void handle_timeout() = 0;
     virtual uint64_t get_conn_id() = 0;
     virtual void on_connection_established() = 0; // add timeouts and other related tasks
+    virtual bool close_after_write() = 0;
+    virtual void graceful_shutdown() = 0;
 };

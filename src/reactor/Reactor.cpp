@@ -22,6 +22,10 @@ int Reactor::start() {
         // block till atleast one socket has an event;
         int num_events = epoll_wait(epoll_fd, events, 64, timeout); // no timeout
         
+        if (num_events == 0) {
+            timer_mngr->execute_expired_timer();
+        }
+
         for (int i = 0; i < num_events; ++i) {
             EventHandler* handler = static_cast<EventHandler*>(events[i].data.ptr);
             if (events[i].events & EPOLLIN) {
@@ -30,9 +34,11 @@ int Reactor::start() {
             if (events[i].events & EPOLLOUT) {
                 handler->handle_write();
             }
+            // only for errosr, other graceful shutdowns need to be handled elsewhere
             if (events[i].events & EPOLLERR) {
                 handler->handle_close();
             }
+
         }
     }
     return 0;

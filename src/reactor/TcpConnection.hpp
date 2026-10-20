@@ -14,4 +14,5 @@ public:
     uint64_t get_conn_id() const override;
 
     TcpConnection(int fd_, uint64_t conn_id_);
+    void graceful_shutdown() override;
 };

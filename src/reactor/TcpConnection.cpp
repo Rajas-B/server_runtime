@@ -20,3 +20,7 @@ uint64_t TcpConnection::get_conn_id() const {
 
 TcpConnection::TcpConnection(int fd_, uint64_t conn_id_):
  fd(fd_), conn_id(conn_id_) {}
+
+void TcpConnection::graceful_shutdown() {
+    shutdown(fd, SHUT_WR);
+}
