@@ -8,6 +8,8 @@ add_library(reactor_lib
     src/reactor/Engine.cpp
     src/reactor/Reactor.cpp
     src/reactor/ReactorEventContext.cpp
+    src/reactor/TcpConnection.cpp
+    src/reactor/TimerManager.cpp
     src/reactor/WakeupHandler.cpp
 )
 

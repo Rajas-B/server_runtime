@@ -2,9 +2,11 @@
 #include <unistd.h>
 #include <sys/eventfd.h>
 #include <memory>
+#include <chrono>
 
 #include "Reactor.hpp"
 #include "WakeupHandler.hpp"
+#include "ConnectionHandler.hpp"
 
 
 int Reactor::start() {
@@ -12,8 +14,13 @@ int Reactor::start() {
     struct epoll_event events[64]; // the events (which will be new connection or a read event)
 
     while (true) {
+        
+        int timeout = -1;
+        if (!timer_mngr->timers.empty()) {
+            timeout = timer_mngr->ms_until_earliest_timer();
+        }
         // block till atleast one socket has an event;
-        int num_events = epoll_wait(epoll_fd, events, 64, -1); // no timeout
+        int num_events = epoll_wait(epoll_fd, events, 64, timeout); // no timeout
         
         for (int i = 0; i < num_events; ++i) {
             EventHandler* handler = static_cast<EventHandler*>(events[i].data.ptr);
@@ -49,7 +56,7 @@ void Reactor::add_handler(EventHandler* handler) {
     epoll_ctl(epoll_fd, EPOLL_CTL_ADD, handler->getfd(), &ev);
 }
 
-void Reactor::add_to_write_ready(EventHandler* handler) {
+void Reactor::add_to_write_ready(ConnectionHandler* handler) {
     {
         std::lock_guard<std::mutex> lock(write_guard);
         ready_to_write_clients.push(handler);
@@ -61,13 +68,13 @@ void Reactor::add_to_write_ready(EventHandler* handler) {
 
 // called by wakeup handler
 void Reactor::process_write_clients() {
-    std::queue<EventHandler*> local_queue;
+    std::queue<ConnectionHandler*> local_queue;
     {
         std::lock_guard<std::mutex> lock(write_guard);
         std::swap(ready_to_write_clients, local_queue);
     }
     while (!local_queue.empty()) {
-        EventHandler* handler = local_queue.front();
+        ConnectionHandler* handler = local_queue.front();
         local_queue.pop();
 
         handler->mark_as_processed();
@@ -84,4 +91,28 @@ void Reactor::modify_epoll(int events, EventHandler* handler) {
     ev.data.ptr = handler;
     ev.events = events;
     epoll_ctl(epoll_fd, EPOLL_CTL_MOD, handler->getfd(), &ev);
+}
+
+uint64_t Reactor::generate_id() {
+    return next_connection_id.fetch_add(1, std::memory_order_relaxed);
+}
+
+void Reactor::register_handler(uint64_t id, ConnectionHandler* handler) {
+    active_handlers[id] = handler;
+}
+
+void Reactor::unregister_handler(uint64_t id) {
+    active_handlers.erase(id);
+}
+
+ConnectionHandler* Reactor::get_handler_if_alive(uint64_t id) {
+    auto it = active_handlers.find(id);
+    if (it != active_handlers.end()) {
+        return it->second;
+    }
+    return nullptr;
+}
+
+void Reactor::register_timer(int expiration, std::function<void()> task) {
+    timer_mngr->add_timer(expiration, task);
 }

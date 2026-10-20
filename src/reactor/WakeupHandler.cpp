@@ -27,3 +27,5 @@ void WakeupHandler::handle_write() {
     uint64_t wakeup_signal = 1;
     write(wakeup_fd, &wakeup_signal, sizeof(uint64_t));
 }
+
+void WakeupHandler::handle_close() {}

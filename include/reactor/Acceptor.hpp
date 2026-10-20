@@ -2,12 +2,16 @@
 
 #include "EventHandler.hpp"
 
+
 #include <memory>
 #include <sys/socket.h>
 
 class EventContext;
 class ReactorEventContext;
 class Reactor;
+class TcpConnection;
+class Connection;
+class ConnectionHandler;
 
 template <typename TFactory>
 class Acceptor: public EventHandler {
@@ -34,12 +38,21 @@ public:
         int clientfd = accept4(server_fd, nullptr, nullptr, SOCK_NONBLOCK);
         
         // added client handler
+        uint64_t conn_id = reactor->generate_id();
         std::unique_ptr<EventContext> context = std::make_unique<ReactorEventContext>(*reactor);
-        EventHandler* handler = handler_factory(clientfd, std::move(context));
+        std::unique_ptr<Connection> conn = std::make_unique<TcpConnection>(clientfd, conn_id);
+        ConnectionHandler* handler = handler_factory(std::move(conn), std::move(context));
+        reactor->register_handler(conn_id, handler);
         reactor->add_handler(handler);
+        handler->on_connection_established();
     }
-    Acceptor(int port, Reactor* reactor): 
-        port(port), reactor(reactor) {
+
+    void handle_write() override {}
+
+    void handle_close() override {}
+
+    Acceptor(int port, Reactor* reactor, TFactory factory): 
+        port(port), reactor(reactor), handler_factory(factory) {
         setup_listening_fd();
         bind_to_port();
     }
