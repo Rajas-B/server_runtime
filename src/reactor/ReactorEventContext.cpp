@@ -22,3 +22,7 @@ void ReactorEventContext::add_to_write_queue() {
 void ReactorEventContext::add_timer(int expiration, std::function<void()> task) {
     reactor.register_timer(expiration, task);
 }
+
+void ReactorEventContext::wakeup_reactor() {
+    reactor.wakeup_reactor();
+}

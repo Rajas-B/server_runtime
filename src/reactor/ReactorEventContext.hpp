@@ -13,6 +13,7 @@ public:
     // function to add a timer of a handler (ttl + now)
     // function to update a timer of a handler (ttl + now)
     void add_timer(int expiration, std::function<void()> task) override;
+    void wakeup_reactor() override;
 private:
     Reactor& reactor;
     ConnectionHandler* handler;

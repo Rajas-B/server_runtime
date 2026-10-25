@@ -11,6 +11,7 @@ add_library(reactor_lib
     src/reactor/TcpConnection.cpp
     src/reactor/TimerManager.cpp
     src/reactor/WakeupHandler.cpp
+    src/reactor/MessageQueue.cpp
 )
 
 target_include_directories(reactor_lib 

@@ -11,4 +11,5 @@ public:
     virtual void add_to_write_queue() = 0;
     virtual void bind_handler(ConnectionHandler* client_handler) = 0;
     virtual void add_timer(int expiration, std::function<void()> task) = 0;
+    virtual void wakeup_reactor() = 0;
 };

@@ -6,7 +6,8 @@
 
 #include "Reactor.hpp"
 #include "WakeupHandler.hpp"
-#include "ConnectionHandler.hpp"
+#include "TcpConnection.hpp"
+#include "MessageQueue.hpp"
 
 
 int Reactor::start() {
@@ -52,6 +53,7 @@ Reactor::Reactor(){
     }
     wakeup_handler = std::make_unique<WakeupHandler>(wakeup_fd, this);
     add_handler(wakeup_handler.get());
+    message_queue = std::make_unique<MessageQueue>();
 }
 
 
@@ -62,29 +64,33 @@ void Reactor::add_handler(EventHandler* handler) {
     epoll_ctl(epoll_fd, EPOLL_CTL_ADD, handler->getfd(), &ev);
 }
 
-void Reactor::add_to_write_ready(ConnectionHandler* handler) {
+void Reactor::add_to_write_ready(TcpConnection* handler) {
     {
         std::lock_guard<std::mutex> lock(write_guard);
         ready_to_write_clients.push(handler);
     }
 
     // wakeup signal
+    wakeup_reactor();
+}
+
+void Reactor::wakeup_reactor() {
     wakeup_handler->handle_write();
 }
 
 // called by wakeup handler
 void Reactor::process_write_clients() {
-    std::queue<ConnectionHandler*> local_queue;
-    {
-        std::lock_guard<std::mutex> lock(write_guard);
-        std::swap(ready_to_write_clients, local_queue);
-    }
-    while (!local_queue.empty()) {
-        ConnectionHandler* handler = local_queue.front();
-        local_queue.pop();
-
-        handler->mark_as_processed();
-        handler->handle_write();
+    std::queue<std::pair<uint64_t, std::vector<uint8_t>*>> current_messages;
+    message_queue->transfer_messages_to_write(current_messages);
+    while (!current_messages.empty()) {
+        auto& it = current_messages.front();
+        TcpConnection* connection = get_handler_if_alive(it.first);
+        if (!connection) { // connection is dead
+            current_messages.pop();
+            continue;
+        }
+        connection->process_message(it.second); // vector is still alive
+        current_messages.pop();
     }
 }
 
@@ -103,7 +109,7 @@ uint64_t Reactor::generate_id() {
     return next_connection_id.fetch_add(1, std::memory_order_relaxed);
 }
 
-void Reactor::register_handler(uint64_t id, ConnectionHandler* handler) {
+void Reactor::register_handler(uint64_t id, TcpConnection* handler) {
     active_handlers[id] = handler;
 }
 
@@ -111,7 +117,7 @@ void Reactor::unregister_handler(uint64_t id) {
     active_handlers.erase(id);
 }
 
-ConnectionHandler* Reactor::get_handler_if_alive(uint64_t id) {
+TcpConnection* Reactor::get_handler_if_alive(uint64_t id) {
     auto it = active_handlers.find(id);
     if (it != active_handlers.end()) {
         return it->second;

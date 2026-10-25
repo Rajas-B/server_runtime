@@ -17,6 +17,7 @@ void WakeupHandler::handle_read() {
     ssize_t bytes_read = read(wakeup_fd, &clear_buffer, sizeof(uint64_t));
     if (bytes_read == -1 | errno != EAGAIN) {
         // catastrophic failure, not sure what this means yet
+        // probably will have to shut the reactor off?
     }
 
     reactor->process_write_clients();

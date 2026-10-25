@@ -16,30 +16,33 @@
 
 class EventHandler;
 class WakeupHandler;
-class ConnectionHandler;
+class MessageQueue;
+class TcpConnection;
 
 class Reactor {
 public:
     Reactor();
     void add_handler(EventHandler* handler);
-    void add_to_write_ready(ConnectionHandler* handler);
+    void add_to_write_ready(TcpConnection* handler);
     void process_write_clients();
     int get_epoll_fd();
     int start();
     void modify_epoll(int events, EventHandler* handler);
     uint64_t generate_id();
-    void register_handler(uint64_t id, ConnectionHandler* handler);
+    void register_handler(uint64_t id, TcpConnection* handler);
     void unregister_handler(uint64_t id);
-    ConnectionHandler* get_handler_if_alive(uint64_t id);
+    TcpConnection* get_handler_if_alive(uint64_t id);
     void register_timer(int expiration, std::function<void()> task);
+    void wakeup_reactor();
 private:
     // this is the epoll fd
     int epoll_fd;
     std::unique_ptr<WakeupHandler> wakeup_handler;
-    std::queue<ConnectionHandler*> ready_to_write_clients;
+    std::queue<TcpConnection*> ready_to_write_clients;
     std::mutex write_guard;
     std::atomic<uint64_t> next_connection_id{1};    
-    std::unordered_map<uint64_t, ConnectionHandler*> active_handlers;
+    std::unordered_map<uint64_t, TcpConnection*> active_handlers;
     std::unique_ptr<TimerManager> timer_mngr;
+    std::unique_ptr<MessageQueue> message_queue;
 };
 

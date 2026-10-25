@@ -39,12 +39,14 @@ public:
         
         // added client handler
         uint64_t conn_id = reactor->generate_id();
-        std::unique_ptr<EventContext> context = std::make_unique<ReactorEventContext>(*reactor);
-        std::unique_ptr<Connection> conn = std::make_unique<TcpConnection>(clientfd, conn_id);
-        ConnectionHandler* handler = handler_factory(std::move(conn), std::move(context));
-        reactor->register_handler(conn_id, handler);
-        reactor->add_handler(handler);
-        handler->on_connection_established();
+        // make tcp connection
+        // feed the tcp connection a protocol handler
+        
+        // register the connection with the reactor and add it to epoll
+        // reactor->register_handler(conn_id, handler);
+        // reactor->add_handler(handler);
+        // handler->on_connection_established();
+
     }
 
     void handle_write() override {}
