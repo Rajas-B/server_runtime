@@ -6,7 +6,7 @@
 #include <atomic>
 #include <mutex>
 
-class EventContext;
+class Reactor;
 // this is a common queue across the reactor loop
 // queue consists of a pair<uint64_t, std::vector<uint8_t>*> {conn_id, message}
 class MessageQueue {
@@ -19,5 +19,5 @@ private:
     void notify_reactor(); // notify reactor thread that there is a message to be written
     std::atomic<bool> is_being_processed = false; // flag to not wake up reactor again and again
     std::mutex queue_guard; // queue is accessed by both reactor and application threads
-    EventContext* reactor_context;
+    Reactor* reactor;
 };

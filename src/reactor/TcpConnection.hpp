@@ -1,5 +1,4 @@
 #pragma once
-#include "Connection.hpp"
 #include "ConnectionHandler.hpp"
 
 #include <mutex>
@@ -33,7 +32,9 @@ public:
     void resume_reading() override;
 private:
     void update_events_to_monitor(int events_to_update);
-    int current_events_to_monitor = 0;
+    void resume_writing();
+    void pause_writing();
+    int current_events_to_monitor = EPOLLIN|EPOLLET;
     int fd;
     uint64_t conn_id;
     uint8_t buf[8*1024];

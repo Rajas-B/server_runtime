@@ -7,7 +7,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_library(reactor_lib
     src/reactor/Server.cpp
     src/reactor/Reactor.cpp
-    src/reactor/ReactorEventContext.cpp
     src/reactor/TcpConnection.cpp
     src/reactor/TimerManager.cpp
     src/reactor/WakeupHandler.cpp

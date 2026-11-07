@@ -34,6 +34,7 @@ public:
     TcpConnection* get_handler_if_alive(uint64_t id);
     void register_timer(int expiration, std::function<void()> task);
     void wakeup_reactor();
+    void request_write_wakeup();
 private:
     // this is the epoll fd
     int epoll_fd;

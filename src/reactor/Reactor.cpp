@@ -35,7 +35,7 @@ int Reactor::start() {
             if (events[i].events & EPOLLOUT) {
                 handler->handle_write();
             }
-            // only for errosr, other graceful shutdowns need to be handled elsewhere
+            // only for error, other graceful shutdowns need to be handled elsewhere
             if (events[i].events & EPOLLERR) {
                 handler->handle_close();
             }
@@ -127,4 +127,8 @@ TcpConnection* Reactor::get_handler_if_alive(uint64_t id) {
 
 void Reactor::register_timer(int expiration, std::function<void()> task) {
     timer_mngr->add_timer(expiration, task);
+}
+
+void Reactor::request_write_wakeup() {
+    modify_epoll(EPOLLIN|EPOLLET|EPOLLOUT, wakeup_handler.get());
 }

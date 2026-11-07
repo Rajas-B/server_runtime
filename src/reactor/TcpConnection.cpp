@@ -44,19 +44,17 @@ void TcpConnection::handle_write() {
     // this forces ordering and queueing of messages on protocol side
 
     ssize_t bytes_written = write(fd, current_message_to_send->data(), current_message_to_send->size());
-
+    resume_writing();
     if (bytes_written == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
         // the OS buffer is full, can't write now
         // break;
-        reactor->modify_epoll(EPOLLIN|EPOLLET|EPOLLOUT, this);
     }
-    if (bytes_written < current_message_to_send->size()) {
+    else if (bytes_written < current_message_to_send->size()) {
         // partial write occurred
         // update the first current_message_to_send to contain only the remaining bytes
         current_message_to_send->erase(current_message_to_send->begin(), current_message_to_send->begin() + bytes_written);
         // break now since a partial write indicates that the OS buffer might be full
         // break;
-        reactor->modify_epoll(EPOLLIN|EPOLLET|EPOLLOUT, this);
     }
     else {
         // message written by TcpConnection, notify handler
@@ -76,7 +74,7 @@ uint64_t TcpConnection::get_conn_id() {
 }
 
 void TcpConnection::on_connection_established() {
-    update_events_to_monitor(EPOLLIN|EPOLLET);
+    current_events_to_monitor = EPOLLIN|EPOLLET;
 }
 
 void TcpConnection::update_events_to_monitor(int events) {
@@ -86,16 +84,38 @@ void TcpConnection::update_events_to_monitor(int events) {
 
 void TcpConnection::pause_reading() {
     // update_events_to_monitor(EPOLLIN);
+    if (current_events_to_monitor&EPOLLIN == 0) {
+        return;
+    }
     current_events_to_monitor &= !EPOLLIN;
     reactor->modify_epoll(current_events_to_monitor, this);
 }
 
 void TcpConnection::resume_reading() {
     // resume reading
+    if (current_events_to_monitor&EPOLLIN > 0) {
+        return;
+    }
     current_events_to_monitor |= EPOLLIN;
     reactor->modify_epoll(current_events_to_monitor, this);
 }
 
 int TcpConnection::getfd() {
     return fd;
+}
+
+void TcpConnection::resume_writing() {
+    if (current_events_to_monitor&EPOLLOUT > 0) {
+        return;
+    }
+    current_events_to_monitor |= EPOLLOUT;
+    reactor->modify_epoll(current_events_to_monitor, this);
+}
+
+void TcpConnection::pause_writing() {
+    if (current_events_to_monitor&EPOLLOUT == 0) {
+        return;
+    }
+    current_events_to_monitor |= EPOLLOUT;
+    reactor->modify_epoll(current_events_to_monitor, this);
 }

@@ -1,5 +1,5 @@
 #include "MessageQueue.hpp"
-#include "EventContext.hpp"
+#include "Reactor.hpp"
 
 void MessageQueue::add_to_write_queue(uint64_t conn_id, std::vector<uint8_t>* message) {
     {
@@ -11,7 +11,7 @@ void MessageQueue::add_to_write_queue(uint64_t conn_id, std::vector<uint8_t>* me
 }
 
 void MessageQueue::notify_reactor() {
-    reactor_context->request_write_wakeup();
+    reactor->request_write_wakeup();
 }
 
 void MessageQueue::transfer_messages_to_write(std::queue<std::pair<uint64_t, std::vector<uint8_t>*>>& current_messages) {
