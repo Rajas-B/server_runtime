@@ -13,6 +13,9 @@ class Reactor;
 
 class TcpConnection: public ConnectionHandler {
 public:
+    TcpConnection(int fd, uint64_t conn_id, Reactor* reactor,
+                  std::unique_ptr<ProtocolHandler> protocol_handler);
+    ~TcpConnection() override;
     // EventHandler traits
     int getfd() override;
     void handle_read() override;

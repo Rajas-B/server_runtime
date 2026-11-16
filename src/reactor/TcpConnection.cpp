@@ -5,11 +5,17 @@
 
 #include <arpa/inet.h>
 
-// handle_read()?
+TcpConnection::TcpConnection(int fd, uint64_t conn_id, Reactor* reactor,
+                             std::unique_ptr<ProtocolHandler> protocol_handler):
+    fd(fd), conn_id(conn_id), protocol_handler(std::move(protocol_handler)), reactor(reactor) {
+}
+
+TcpConnection::~TcpConnection() = default;
+
 
 void TcpConnection::handle_read() {
     ssize_t bytes_read = read(fd, buf, 8192);
-    if (bytes_read == -1 && errno == EAGAIN) {    
+    if (bytes_read == -1 && errno == EAGAIN) {
         handle_close(); // Socket is drained, go back to epoll/reactor
     }
     if (bytes_read == 0) { // natural closing of connection
@@ -74,6 +80,8 @@ uint64_t TcpConnection::get_conn_id() {
 }
 
 void TcpConnection::on_connection_established() {
+    // add protocol handler initialization
+    protocol_handler->
     current_events_to_monitor = EPOLLIN|EPOLLET;
 }
 
