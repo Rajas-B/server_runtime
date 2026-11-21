@@ -64,10 +64,10 @@ void Reactor::add_handler(EventHandler* handler) {
     epoll_ctl(epoll_fd, EPOLL_CTL_ADD, handler->getfd(), &ev);
 }
 
-void Reactor::add_to_write_ready(uint64_t conn_id) {
+void Reactor::add_to_write_ready(uint64_t conn_id, std::vector<uint8_t>* response) {
     {
         std::lock_guard<std::mutex> lock(write_guard);
-        ready_to_write_clients.push(conn_id);
+        responses_to_write.push(std::make_pair(conn_id, response));
     }
     // wakeup signal
     wakeup_reactor();
@@ -85,7 +85,7 @@ void Reactor::process_write_clients() {
     
     WriteQueue current_write_connections;
     std::lock_guard<std::mutex> lock(write_guard);
-    std::swap(ready_to_write_clients, current_write_connections);
+    std::swap(responses_to_write, current_write_connections);
     while (!current_write_connections.empty()) {
         auto& conn_id = current_write_connections.front();
         TcpConnection* connection = get_handler_if_alive(conn_id);

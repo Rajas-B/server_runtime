@@ -1,9 +1,7 @@
 #pragma once
 
 #include <sys/epoll.h>
-#include <sys/socket.h>
 #include <netinet/in.h>
-#include <unistd.h>
 #include <iostream>
 #include <queue>
 #include <mutex>
@@ -11,6 +9,7 @@
 #include <atomic>
 #include <unordered_map>
 #include <functional>
+#include <vector>
 
 #include "TimerManager.hpp"
 
@@ -20,13 +19,14 @@ class MessageQueue;
 class TcpConnection;
 
 class Reactor {
-using WriteQueue = std::queue<uint64_t>;
+using Response = std::pair<uint64_t, std::vector<uint8_t>*>;
+using WriteQueue = std::queue<Response>;
 
 public:
     Reactor();
     void add_handler(EventHandler* handler);
-    void add_to_write_ready(uint64_t conn_id);
-    void process_write_clients();
+    void add_to_write_ready(uint64_t conn_id, std::vector<uint8_t>* response);
+    void process_write_queue();
     int get_epoll_fd();
     int start();
     void modify_epoll(int events, EventHandler* handler);
@@ -41,7 +41,7 @@ private:
     // this is the epoll fd
     int epoll_fd;
     std::unique_ptr<WakeupHandler> wakeup_handler;
-    WriteQueue ready_to_write_clients;
+    WriteQueue responses_to_write;
     std::mutex write_guard;
     std::atomic<uint64_t> next_connection_id{1};    
     std::unordered_map<uint64_t, TcpConnection*> active_handlers;
