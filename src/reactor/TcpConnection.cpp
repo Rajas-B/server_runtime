@@ -68,9 +68,8 @@ void TcpConnection::handle_write() {
     }
 }
 
-void TcpConnection::get_message_and_write() {
-    current_message_to_send = protocol_handler->return_response();
-    handle_write();
+void TcpConnection::get_message_and_write(std::vector<uint8_t>* message) {
+    protocol_handler->process_response_message(message);
 }
 
 uint64_t TcpConnection::get_conn_id() {

@@ -32,7 +32,7 @@ public:
     void graceful_shutdown() override;
     void pause_reading() override;
     void resume_reading() override;
-    void get_message_and_write();
+    void get_message_and_write(std::vector<uint8_t>* message);
 private:
     void resume_writing();
     void pause_writing();

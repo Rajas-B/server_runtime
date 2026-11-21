@@ -79,15 +79,15 @@ void Reactor::wakeup_reactor() {
 
 // called by wakeup handler
 // this should instead have a queue of 
-void Reactor::process_write_clients() {
-    std::queue<std::pair<uint64_t, std::vector<uint8_t>*>> current_messages;
-    message_queue->transfer_messages_to_write(current_messages);
+void Reactor::process_write_queue() {
+    // std::queue<std::pair<uint64_t, std::vector<uint8_t>*>> current_messages;
+    // message_queue->transfer_messages_to_write(current_messages);
     
-    WriteQueue current_write_connections;
+    WriteQueue current_messages;
     std::lock_guard<std::mutex> lock(write_guard);
-    std::swap(responses_to_write, current_write_connections);
-    while (!current_write_connections.empty()) {
-        auto& conn_id = current_write_connections.front();
+    std::swap(responses_to_write, current_messages);
+    while (!current_messages.empty()) {
+        auto& [conn_id, message] = current_messages.front();
         TcpConnection* connection = get_handler_if_alive(conn_id);
         if (!connection) { // connection is dead
             current_messages.pop();
