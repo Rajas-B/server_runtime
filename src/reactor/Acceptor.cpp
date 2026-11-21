@@ -3,7 +3,7 @@
 #include "TcpConnection.hpp"
 #include "Reactor.hpp"
 
-int Acceptor::getfd () override {
+int Acceptor::getfd () {
     return server_fd;
 }
 
@@ -21,7 +21,7 @@ void Acceptor::bind_to_port() {
     setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(val));
 }
 
-void Acceptor::handle_read() override {
+void Acceptor::handle_read() {
     int clientfd = accept4(server_fd, nullptr, nullptr, SOCK_NONBLOCK);
     uint64_t conn_id = reactor->generate_id();
     // TODO
@@ -35,9 +35,9 @@ void Acceptor::handle_read() override {
 
 }
 
-void Acceptor::handle_write() override {}
+void Acceptor::handle_write() {}
 
-void Acceptor::handle_close() override {}
+void Acceptor::handle_close() {}
 
 Acceptor::Acceptor(int port, Reactor* reactor,
                    std::function<std::unique_ptr<TcpConnection>(int, uint64_t)> connection_factory):

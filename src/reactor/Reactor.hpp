@@ -20,10 +20,12 @@ class MessageQueue;
 class TcpConnection;
 
 class Reactor {
+using WriteQueue = std::queue<uint64_t>;
+
 public:
     Reactor();
     void add_handler(EventHandler* handler);
-    void add_to_write_ready(TcpConnection* handler);
+    void add_to_write_ready(uint64_t conn_id);
     void process_write_clients();
     int get_epoll_fd();
     int start();
@@ -39,7 +41,7 @@ private:
     // this is the epoll fd
     int epoll_fd;
     std::unique_ptr<WakeupHandler> wakeup_handler;
-    std::queue<TcpConnection*> ready_to_write_clients;
+    WriteQueue ready_to_write_clients;
     std::mutex write_guard;
     std::atomic<uint64_t> next_connection_id{1};    
     std::unordered_map<uint64_t, TcpConnection*> active_handlers;

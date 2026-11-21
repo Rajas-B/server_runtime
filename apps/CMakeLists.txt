@@ -1,3 +1,5 @@
-add_executable(my_test_server server_example.cpp)
+add_executable(my_test_server server_example.cpp
+    TestProtocolHandler.hpp
+    TestProtocolHandler.cpp)
 
 target_link_libraries(my_test_server PRIVATE reactor_lib)

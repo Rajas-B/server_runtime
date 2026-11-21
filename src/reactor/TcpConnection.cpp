@@ -2,6 +2,7 @@
 
 #include "ProtocolHandler.hpp"
 #include "Reactor.hpp"
+#include "TcpConnectionContext.hpp"
 
 #include <arpa/inet.h>
 
@@ -39,11 +40,6 @@ void TcpConnection::graceful_shutdown() {
     shutdown(fd, SHUT_WR);
 }
 
-void TcpConnection::send_message(std::vector<uint8_t>* message) {
-    current_message_to_send = message;
-    handle_write();
-}
-
 // only handles write of a single message, notifies the protocol handler that the message has been sent
 void TcpConnection::handle_write() {
     // fetch next message to be written from protocol handler
@@ -65,14 +61,16 @@ void TcpConnection::handle_write() {
     else {
         // message written by TcpConnection, notify handler
         // pause write events
+        current_message_to_send->erase(current_message_to_send->begin(), current_message_to_send->begin() + current_message_to_send->size());
         current_message_to_send = nullptr; // let the handler deal with the sent message, protocol logic is variable
         reactor->modify_epoll(EPOLLIN|EPOLLET, this);
         protocol_handler->on_message_sent();
     }
 }
 
-void TcpConnection::process_message(std::vector<uint8_t>* message) {
-    protocol_handler->process_response(message);
+void TcpConnection::get_message_and_write() {
+    current_message_to_send = protocol_handler->return_response();
+    handle_write();
 }
 
 uint64_t TcpConnection::get_conn_id() {
@@ -81,15 +79,15 @@ uint64_t TcpConnection::get_conn_id() {
 
 void TcpConnection::on_connection_established() {
     // add protocol handler initialization
-    protocol_handler->
+    protocol_handler->on_connection_established(new TcpConnectionContext(this));
     current_events_to_monitor = EPOLLIN|EPOLLET;
 }
 
-void TcpConnection::update_events_to_monitor(int events) {
-    current_events_to_monitor ^= events; // difference is turned on
-    reactor->modify_epoll(current_events_to_monitor, this);
+int TcpConnection::getfd() {
+    return fd;
 }
 
+// reactor context
 void TcpConnection::pause_reading() {
     // update_events_to_monitor(EPOLLIN);
     if (current_events_to_monitor&EPOLLIN == 0) {
@@ -106,10 +104,6 @@ void TcpConnection::resume_reading() {
     }
     current_events_to_monitor |= EPOLLIN;
     reactor->modify_epoll(current_events_to_monitor, this);
-}
-
-int TcpConnection::getfd() {
-    return fd;
 }
 
 void TcpConnection::resume_writing() {

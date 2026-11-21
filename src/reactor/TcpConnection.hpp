@@ -10,6 +10,7 @@
 
 class ProtocolHandler;
 class Reactor;
+class ReactorContext;
 
 class TcpConnection: public ConnectionHandler {
 public:
@@ -29,12 +30,10 @@ public:
     uint64_t get_conn_id() override;
     void on_connection_established() override; // add timeouts and other related tasks
     void graceful_shutdown() override;
-    void process_message(std::vector<uint8_t>* message);
-    void send_message(std::vector<uint8_t>* message) override;
     void pause_reading() override;
     void resume_reading() override;
+    void get_message_and_write();
 private:
-    void update_events_to_monitor(int events_to_update);
     void resume_writing();
     void pause_writing();
     int current_events_to_monitor = EPOLLIN|EPOLLET;
@@ -47,4 +46,5 @@ private:
     std::deque<std::vector<uint8_t>> write_queue;
     std::atomic<bool> is_being_processed{false}; // set to true when this handler is added in reactor's queue, to avoid duplicate entries
     Reactor* reactor;
+    ReactorContext* rctr_ctx;
 };

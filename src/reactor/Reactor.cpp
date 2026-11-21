@@ -64,12 +64,11 @@ void Reactor::add_handler(EventHandler* handler) {
     epoll_ctl(epoll_fd, EPOLL_CTL_ADD, handler->getfd(), &ev);
 }
 
-void Reactor::add_to_write_ready(TcpConnection* handler) {
+void Reactor::add_to_write_ready(uint64_t conn_id) {
     {
         std::lock_guard<std::mutex> lock(write_guard);
-        ready_to_write_clients.push(handler);
+        ready_to_write_clients.push(conn_id);
     }
-
     // wakeup signal
     wakeup_reactor();
 }
@@ -79,18 +78,22 @@ void Reactor::wakeup_reactor() {
 }
 
 // called by wakeup handler
+// this should instead have a queue of 
 void Reactor::process_write_clients() {
     std::queue<std::pair<uint64_t, std::vector<uint8_t>*>> current_messages;
     message_queue->transfer_messages_to_write(current_messages);
-    while (!current_messages.empty()) {
-        auto& it = current_messages.front();
-        TcpConnection* connection = get_handler_if_alive(it.first);
+    
+    WriteQueue current_write_connections;
+    std::lock_guard<std::mutex> lock(write_guard);
+    std::swap(ready_to_write_clients, current_write_connections);
+    while (!current_write_connections.empty()) {
+        auto& conn_id = current_write_connections.front();
+        TcpConnection* connection = get_handler_if_alive(conn_id);
         if (!connection) { // connection is dead
             current_messages.pop();
             continue;
         }
-        connection->process_message(it.second); // vector is still alive
-        current_messages.pop();
+        connection->get_message_and_write();
     }
 }
 
